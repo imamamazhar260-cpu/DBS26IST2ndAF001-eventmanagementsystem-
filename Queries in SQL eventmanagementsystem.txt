@@ -1,0 +1,1001 @@
+--1. ROLE TABLE
+CREATE TABLE Role (
+    RoleID INT PRIMARY KEY IDENTITY(1,1),
+    RoleName VARCHAR(50) NOT NULL UNIQUE
+);
+
+
+--2. USER TABLE
+CREATE TABLE [User] (
+    UserID INT PRIMARY KEY IDENTITY(1,1),
+
+    FullName VARCHAR(100) NOT NULL,
+
+    Email VARCHAR(100)
+    UNIQUE NOT NULL,
+
+    Password VARCHAR(100)
+    NOT NULL,
+
+    Phone VARCHAR(20),
+
+    Gender VARCHAR(10),
+
+    RoleID INT,
+
+    CreatedAt DATETIME
+    DEFAULT GETDATE(),
+
+    FOREIGN KEY (RoleID)
+    REFERENCES Role(RoleID)
+);
+
+--3. ORGANIZER TABLE
+CREATE TABLE Organizer (
+    OrganizerID INT PRIMARY KEY IDENTITY(1,1),
+
+    UserID INT UNIQUE,
+
+    OrganizationName VARCHAR(100),
+
+    ExperienceYears INT
+    CHECK (ExperienceYears >= 0),
+
+    FOREIGN KEY (UserID)
+    REFERENCES [User](UserID)
+);
+
+
+--4. CUSTOMER TABLE
+CREATE TABLE Customer (
+    CustomerID INT PRIMARY KEY IDENTITY(1,1),
+
+    UserID INT UNIQUE,
+
+    Address VARCHAR(200),
+
+    FOREIGN KEY (UserID)
+    REFERENCES [User](UserID)
+);
+
+
+--5. STAFF TABLE
+CREATE TABLE Staff (
+    StaffID INT PRIMARY KEY IDENTITY(1,1),
+
+    UserID INT UNIQUE,
+
+    Position VARCHAR(50),
+
+    Salary DECIMAL(10,2)
+    CHECK (Salary >= 0),
+
+    FOREIGN KEY (UserID)
+    REFERENCES [User](UserID)
+);
+
+
+--6. VENUE TABLE
+CREATE TABLE Venue (
+    VenueID INT PRIMARY KEY IDENTITY(1,1),
+
+    VenueName VARCHAR(100)
+    NOT NULL,
+
+    Location VARCHAR(200),
+
+    Capacity INT
+    CHECK (Capacity > 0),
+
+    ContactNumber VARCHAR(20)
+);
+
+
+--7. CATEGORY TABLE
+CREATE TABLE Category (
+    CategoryID INT PRIMARY KEY IDENTITY(1,1),
+
+    CategoryName VARCHAR(50)
+    NOT NULL UNIQUE
+);
+
+
+
+--8. EVENT TABLE
+CREATE TABLE Event (
+    EventID INT PRIMARY KEY IDENTITY(1,1),
+
+    EventTitle VARCHAR(100)
+    NOT NULL,
+
+    Description TEXT,
+
+    EventDate DATE
+    NOT NULL,
+
+    StartTime TIME,
+
+    EndTime TIME,
+
+    TicketPrice DECIMAL(10,2),
+
+    TotalSeats INT
+    CHECK (TotalSeats > 0),
+
+    VenueID INT,
+
+    CategoryID INT,
+
+    OrganizerID INT,
+
+    FOREIGN KEY (VenueID)
+    REFERENCES Venue(VenueID),
+
+    FOREIGN KEY (CategoryID)
+    REFERENCES Category(CategoryID),
+
+    FOREIGN KEY (OrganizerID)
+    REFERENCES Organizer(OrganizerID)
+);
+
+
+--9. EVENTSCHEDULE TABLE
+CREATE TABLE EventSchedule (
+    ScheduleID INT PRIMARY KEY IDENTITY(1,1),
+
+    EventID INT,
+
+    ActivityName VARCHAR(100),
+
+    ActivityTime TIME,
+
+    FOREIGN KEY (EventID)
+    REFERENCES Event(EventID)
+);
+
+
+--10. AVAILABLESLOT TABLE
+CREATE TABLE AvailableSlot (
+    SlotID INT PRIMARY KEY IDENTITY(1,1),
+
+    EventID INT,
+
+    AvailableSeats INT
+    CHECK (AvailableSeats >= 0),
+
+    FOREIGN KEY (EventID)
+    REFERENCES Event(EventID)
+);
+
+
+
+==11. BOOKING TABLE
+CREATE TABLE Booking (
+    BookingID INT PRIMARY KEY IDENTITY(1,1),
+
+    CustomerID INT,
+
+    EventID INT,
+
+    BookingDate DATETIME
+    DEFAULT GETDATE(),
+
+    NumberOfTickets INT
+    CHECK (NumberOfTickets > 0),
+
+    BookingStatus VARCHAR(20)
+    CHECK (BookingStatus IN
+    ('Confirmed','Pending','Cancelled')),
+
+    FOREIGN KEY (CustomerID)
+    REFERENCES Customer(CustomerID),
+
+    FOREIGN KEY (EventID)
+    REFERENCES Event(EventID)
+);
+
+
+
+--12. PAYMENT TABLE
+CREATE TABLE Payment (
+    PaymentID INT PRIMARY KEY IDENTITY(1,1),
+
+    BookingID INT UNIQUE,
+
+    Amount DECIMAL(10,2)
+    CHECK (Amount >= 0),
+
+    PaymentDate DATETIME
+    DEFAULT GETDATE(),
+
+    PaymentMethod VARCHAR(50),
+
+    PaymentStatus VARCHAR(20)
+    CHECK (PaymentStatus IN
+    ('Paid','Pending','Refunded')),
+
+    FOREIGN KEY (BookingID)
+    REFERENCES Booking(BookingID)
+);
+
+
+--13. TICKET TABLE
+CREATE TABLE Ticket (
+    TicketID INT PRIMARY KEY IDENTITY(1,1),
+
+    BookingID INT,
+
+    TicketNumber VARCHAR(50)
+    UNIQUE NOT NULL,
+
+    SeatNumber VARCHAR(20),
+
+    QRCode VARCHAR(200),
+
+    FOREIGN KEY (BookingID)
+    REFERENCES Booking(BookingID)
+);
+
+
+--14. VENDOR TABLE
+CREATE TABLE Vendor (
+    VendorID INT PRIMARY KEY IDENTITY(1,1),
+
+    VendorName VARCHAR(100)
+    NOT NULL,
+
+    ServiceType VARCHAR(50),
+
+    ContactNumber VARCHAR(20)
+);
+
+
+--15. EVENTVENDOR TABLE
+CREATE TABLE EventVendor (
+    EventVendorID INT PRIMARY KEY IDENTITY(1,1),
+
+    EventID INT,
+
+    VendorID INT,
+
+    FOREIGN KEY (EventID)
+    REFERENCES Event(EventID),
+
+    FOREIGN KEY (VendorID)
+    REFERENCES Vendor(VendorID)
+);
+
+
+--16. FEEDBACK TABLE
+CREATE TABLE Feedback (
+    FeedbackID INT PRIMARY KEY IDENTITY(1,1),
+
+    CustomerID INT,
+
+    EventID INT,
+
+    Rating INT
+    CHECK (Rating BETWEEN 1 AND 5),
+
+    Comments TEXT,
+
+    FeedbackDate DATETIME
+    DEFAULT GETDATE(),
+
+    FOREIGN KEY (CustomerID)
+    REFERENCES Customer(CustomerID),
+
+    FOREIGN KEY (EventID)
+    REFERENCES Event(EventID)
+);
+
+
+--17. NOTIFICATION TABLE
+CREATE TABLE Notification (
+    NotificationID INT PRIMARY KEY IDENTITY(1,1),
+
+    UserID INT,
+
+    Message VARCHAR(255),
+
+    NotificationDate DATETIME
+    DEFAULT GETDATE(),
+
+    FOREIGN KEY (UserID)
+    REFERENCES [User](UserID)
+);
+
+--18. LOGS TABLE
+CREATE TABLE Logs (
+    LogID INT PRIMARY KEY IDENTITY(1,1),
+
+    ErrorMessage VARCHAR(255),
+
+    LogDate DATETIME
+    DEFAULT GETDATE(),
+
+    UserID INT,
+
+    FOREIGN KEY (UserID)
+    REFERENCES [User](UserID)
+);
+NOW YOUR N
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------dummy data insertion-----------------
+
+
+
+
+-- ROLE DATA
+-- =========================
+
+INSERT INTO Role(RoleName)
+VALUES
+('Admin'),
+('Organizer'),
+('Customer'),
+('Staff');
+
+
+
+-- =========================
+-- USER DATA
+-- =========================
+
+INSERT INTO [User]
+(FullName, Email, Password, Phone, Gender, RoleID)
+VALUES
+('Ali Raza', 'ali@gmail.com', '123', '03001234567', 'Male', 1),
+
+('Sara Khan', 'sara@gmail.com', '123', '03111234567', 'Female', 2),
+
+('Ahmed Ali', 'ahmed@gmail.com', '123', '03221234567', 'Male', 3),
+
+('Hina Noor', 'hina@gmail.com', '123', '03331234567', 'Female', 3),
+
+('Usman Tariq', 'usman@gmail.com', '123', '03441234567', 'Male', 2),
+
+('Areeba Malik', 'areeba@gmail.com', '123', '03551234567', 'Female', 4),
+
+('Bilal Ahmed', 'bilal@gmail.com', '123', '03661234567', 'Male', 3),
+
+('Fatima Zahra', 'fatima@gmail.com', '123', '03771234567', 'Female', 3),
+
+('Hamza Khan', 'hamza@gmail.com', '123', '03881234567', 'Male', 4),
+
+('Zain Ali', 'zain@gmail.com', '123', '03991234567', 'Male', 2);
+
+
+
+-- =========================
+-- ORGANIZER DATA
+-- =========================
+
+INSERT INTO Organizer
+(UserID, OrganizationName, ExperienceYears)
+VALUES
+(2, 'Event Masters', 5),
+
+(5, 'Royal Events', 3),
+
+(10, 'Dream Planners', 7);
+
+
+
+-- =========================
+-- CUSTOMER DATA
+-- =========================
+
+INSERT INTO Customer
+(UserID, Address)
+VALUES
+(3, 'Lahore'),
+
+(4, 'Karachi'),
+
+(7, 'Islamabad'),
+
+(8, 'Faisalabad');
+
+
+
+
+
+
+
+
+
+-- =========================
+-- VENUE DATA
+-- =========================
+
+INSERT INTO Venue
+(VenueName, Location, Capacity, ContactNumber)
+VALUES
+('Expo Center', 'Lahore', 500, '042111111'),
+
+('City Hall', 'Islamabad', 300, '051222222'),
+
+('Royal Palace', 'Karachi', 700, '021333333'),
+
+('Pearl Continental', 'Lahore', 450, '042444444'),
+
+('Grand Marquee', 'Multan', 600, '061555555');
+
+
+
+-- =========================
+-- CATEGORY DATA
+-- =========================
+
+INSERT INTO Category(CategoryName)
+VALUES
+('Conference'),
+
+('Concert'),
+
+('Wedding'),
+
+('Seminar'),
+
+('Exhibition');
+
+
+
+-- =========================
+-- EVENT DATA
+-- =========================
+
+INSERT INTO Event
+(EventTitle, Description, EventDate,
+StartTime, EndTime,
+TicketPrice, TotalSeats,
+VenueID, CategoryID, OrganizerID)
+
+VALUES
+
+('Tech Conference',
+'Technology Event',
+'2026-06-10',
+'10:00',
+'16:00',
+2500,
+500,
+1,
+1,
+1),
+
+('Music Concert',
+'Live Concert',
+'2026-06-15',
+'18:00',
+'23:00',
+4000,
+300,
+2,
+2,
+2),
+
+('Wedding Expo',
+'Wedding Planning Exhibition',
+'2026-07-01',
+'11:00',
+'20:00',
+1500,
+700,
+3,
+3,
+3),
+
+('Business Seminar',
+'Corporate Seminar',
+'2026-07-20',
+'09:00',
+'15:00',
+2000,
+450,
+4,
+4,
+1),
+
+('Art Exhibition',
+'Modern Art Showcase',
+'2026-08-05',
+'12:00',
+'18:00',
+1000,
+600,
+5,
+5,
+2);
+
+
+
+-- =========================
+-- EVENT SCHEDULE DATA
+-- =========================
+
+INSERT INTO EventSchedule
+(EventID, ActivityName, ActivityTime)
+VALUES
+(1, 'Opening Ceremony', '10:00'),
+
+(1, 'AI Workshop', '12:00'),
+
+(2, 'Band Performance', '19:00'),
+
+(3, 'Fashion Walk', '15:00'),
+
+(4, 'Business Talk', '11:00'),
+
+(5, 'Painting Showcase', '14:00');
+
+
+
+-- =========================
+-- AVAILABLE SLOT DATA
+-- =========================
+
+INSERT INTO AvailableSlot
+(EventID, AvailableSeats)
+VALUES
+(1, 450),
+
+(2, 250),
+
+(3, 650),
+
+(4, 400),
+
+(5, 550);
+
+
+
+-- =========================
+-- BOOKING DATA
+-- =========================
+
+INSERT INTO Booking
+(CustomerID, EventID, BookingDate,
+NumberOfTickets, BookingStatus)
+VALUES
+
+(1, 1, GETDATE(), 2, 'Confirmed'),
+
+(2, 2, GETDATE(), 3, 'Confirmed'),
+
+(3, 3, GETDATE(), 1, 'Pending'),
+
+(4, 4, GETDATE(), 4, 'Confirmed'),
+
+(1, 5, GETDATE(), 2, 'Cancelled'),
+
+(2, 1, GETDATE(), 5, 'Confirmed'),
+
+(3, 2, GETDATE(), 1, 'Pending'),
+
+(4, 3, GETDATE(), 2, 'Confirmed');
+
+
+
+-- =========================
+-- PAYMENT DATA
+-- =========================
+
+INSERT INTO Payment
+(BookingID, Amount, PaymentDate,
+PaymentMethod, PaymentStatus)
+VALUES
+
+(1, 5000, GETDATE(), 'JazzCash', 'Paid'),
+
+(2, 12000, GETDATE(), 'Credit Card', 'Paid'),
+
+(3, 1500, GETDATE(), 'EasyPaisa', 'Pending'),
+
+(4, 8000, GETDATE(), 'Debit Card', 'Paid'),
+
+(5, 2000, GETDATE(), 'Cash', 'Refunded'),
+
+(6, 12500, GETDATE(), 'JazzCash', 'Paid'),
+
+(7, 4000, GETDATE(), 'EasyPaisa', 'Pending'),
+
+(8, 3000, GETDATE(), 'Cash', 'Paid');
+
+
+
+-- =========================
+-- TICKET DATA
+-- =========================
+
+INSERT INTO Ticket
+(BookingID, TicketNumber,
+SeatNumber, QRCode)
+VALUES
+
+(1, 'TCK101', 'A1', 'QR101'),
+
+(1, 'TCK102', 'A2', 'QR102'),
+
+(2, 'TCK103', 'B1', 'QR103'),
+
+(2, 'TCK104', 'B2', 'QR104'),
+
+(3, 'TCK105', 'C1', 'QR105'),
+
+(4, 'TCK106', 'D1', 'QR106'),
+
+(5, 'TCK107', 'E1', 'QR107'),
+
+(6, 'TCK108', 'F1', 'QR108');
+
+
+
+-- =========================
+-- VENDOR DATA
+-- =========================
+
+INSERT INTO Vendor
+(VendorName, ServiceType,
+ContactNumber)
+VALUES
+
+('Foodies Catering', 'Catering', '03001230000'),
+
+('Bright Lights', 'Decoration', '03111230000'),
+
+('Secure Guards', 'Security', '03221230000'),
+
+('DJ Beats', 'Music', '03331230000'),
+
+('Photo Studio', 'Photography', '03441230000');
+
+
+
+-- =========================
+-- EVENT VENDOR DATA
+-- =========================
+
+INSERT INTO EventVendor
+(EventID, VendorID)
+VALUES
+
+(1,1),
+
+(1,3),
+
+(2,4),
+
+(3,2),
+
+(3,5),
+
+(4,1),
+
+(5,2);
+
+
+
+-- =========================
+-- FEEDBACK DATA
+-- =========================
+
+INSERT INTO Feedback
+(CustomerID, EventID,
+Rating, Comments, FeedbackDate)
+VALUES
+
+(1,1,5,'Excellent event',GETDATE()),
+
+(2,2,4,'Great concert',GETDATE()),
+
+(3,3,3,'Good management',GETDATE()),
+
+(4,4,5,'Very informative',GETDATE()),
+
+(1,5,4,'Amazing artwork',GETDATE());
+
+
+
+-- =========================
+-- NOTIFICATION DATA
+-- =========================
+
+INSERT INTO Notification
+(UserID, Message, NotificationDate)
+VALUES
+
+(1,'New Event Added',GETDATE()),
+
+(2,'Booking Confirmed',GETDATE()),
+
+(3,'Payment Received',GETDATE()),
+
+(4,'Event Reminder',GETDATE()),
+
+(5,'Feedback Submitted',GETDATE());
+
+
+
+-- =========================
+-- LOGS DATA
+-- =========================
+
+INSERT INTO Logs
+(ErrorMessage, LogDate, UserID)
+VALUES
+
+('Login Failed', GETDATE(), 1),
+
+('Payment Error', GETDATE(), 2),
+
+('Booking Cancelled', GETDATE(), 3),
+
+('Database Timeout', GETDATE(), 4),
+
+('Invalid Ticket Scan', GETDATE(), 5);
+
+
+
+
+
+INSERT INTO Staff
+(UserID, Position, Salary)
+
+VALUES
+(1, 'Manager', 50000),
+
+(2, 'Security Officer', 35000);
+
+----views----------
+
+
+--upcoming event view
+CREATE VIEW UpcomingEvents AS
+SELECT
+EventID,
+EventTitle,
+EventDate,
+TicketPrice
+FROM Event
+WHERE EventDate >= GETDATE();
+
+
+
+--Booking Details View
+CREATE VIEW BookingDetails AS
+SELECT
+B.BookingID,
+U.FullName,
+E.EventTitle,
+B.NumberOfTickets,
+B.BookingStatus
+
+FROM Booking B
+
+JOIN Customer C
+ON B.CustomerID = C.CustomerID
+
+JOIN [User] U
+ON C.UserID = U.UserID
+
+JOIN Event E
+ON B.EventID = E.EventID;
+
+
+--Payment Summary View
+CREATE VIEW PaymentSummary AS
+SELECT
+PaymentID,
+Amount,
+PaymentMethod,
+PaymentStatus
+FROM Payment;
+
+--Event Vendor View
+
+CREATE VIEW 
+EventVendorDetails AS
+SELECT
+E.EventTitle,
+V.VendorName,
+V.ServiceType
+
+FROM EventVendor EV
+
+JOIN Event E
+ON EV.EventID = E.EventID
+
+JOIN Vendor V
+ON EV.VendorID = V.VendorID;
+
+
+
+--Feedback View
+CREATE VIEW FeedbackDetails AS
+SELECT
+F.FeedbackID,
+E.EventTitle,
+F.Rating,
+F.Comments
+
+FROM Feedback F
+
+JOIN Event E
+ON F.EventID = E.EventID;
+
+
+
+--testing
+SELECT * FROM UpcomingEvents;
+
+
+--add event procedure
+CREATE PROCEDURE AddEvent
+
+@EventTitle VARCHAR(100),
+@Description TEXT,
+@EventDate DATE,
+@TicketPrice DECIMAL(10,2),
+@TotalSeats INT,
+@VenueID INT,
+@CategoryID INT,
+@OrganizerID INT
+
+AS
+BEGIN
+
+INSERT INTO Event
+(
+EventTitle,
+Description,
+EventDate,
+TicketPrice,
+TotalSeats,
+VenueID,
+CategoryID,
+OrganizerID
+)
+
+VALUES
+(
+@EventTitle,
+@Description,
+@EventDate,
+@TicketPrice,
+@TotalSeats,
+@VenueID,
+@CategoryID,
+@OrganizerID
+)
+
+END
+
+
+--execute procedure
+EXEC AddEvent
+'Gaming Expo',
+'Gaming Event',
+'2026-10-10',
+3000,
+400,
+1,
+1,
+1;
+
+
+--search Event Procedure
+CREATE PROCEDURE SearchEvent
+@Title VARCHAR(100)
+
+AS
+BEGIN
+
+SELECT *
+FROM Event
+WHERE EventTitle LIKE '%' + @Title + '%'
+
+END
+
+
+--delete event procedure
+CREATE PROCEDURE DeleteEvent
+@EventID INT
+
+AS
+BEGIN
+
+DELETE FROM Event
+WHERE EventID = @EventID
+
+END
+
+
+--Reduce Seats Trigger
+CREATE TRIGGER trg_UpdateSeats
+
+ON Booking
+
+AFTER INSERT
+
+AS
+BEGIN
+
+UPDATE AvailableSlot
+
+SET AvailableSeats =
+AvailableSeats - inserted.NumberOfTickets
+
+FROM inserted
+
+WHERE AvailableSlot.EventID =
+inserted.EventID
+
+END
+
+
+--Log Deleted Event Trigger
+CREATE TRIGGER trg_LogDeletedEvent
+
+ON Event
+
+AFTER DELETE
+
+AS
+BEGIN
+
+INSERT INTO Logs
+(ErrorMessage, LogDate)
+
+VALUES
+('Event Deleted', GETDATE())
+
+END
+
+
+--Ticket Booking Transaction
+BEGIN TRANSACTION
+
+BEGIN TRY
+
+INSERT INTO Booking
+(CustomerID, EventID,
+NumberOfTickets, BookingStatus)
+
+VALUES
+(1,1,2,'Confirmed')
+
+INSERT INTO Payment
+(BookingID, Amount,
+PaymentMethod, PaymentStatus)
+
+VALUES
+(SCOPE_IDENTITY(),
+5000,
+'JazzCash',
+'Paid')
+
+COMMIT TRANSACTION
+
+END TRY
+
+BEGIN CATCH
+
+ROLLBACK TRANSACTION
+
+PRINT 'Transaction Failed'
+
+END CATCH
