@@ -1,0 +1,357 @@
+--customer form
+
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+using eventmanagementsystem.Services;
+
+namespace eventmanagementsystem.Forms
+{
+    public partial class CustomerForm : Form
+    {
+        int selectedCustomerID = 0;
+        public CustomerForm()
+        {
+            InitializeComponent();
+        }
+        void LoadCustomers()
+        {
+            SqlConnection con =
+            DBConnection.GetConnection();
+
+            con.Open();
+
+            string query =
+            @"SELECT
+    CustomerID,
+    CustomerName,
+    Phone,
+    Gender,
+    Address,
+    IsActive
+
+    FROM Customer";
+
+            SqlDataAdapter da =
+            new SqlDataAdapter(query, con);
+
+            DataTable dt =
+            new DataTable();
+
+            da.Fill(dt);
+
+            dgvCustomers.DataSource = dt;
+
+            con.Close();
+        }
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void CustomerForm_Load(object sender, EventArgs e)
+        {
+            LoadCustomers();
+        }
+
+        private void btnAdd_Click(object sender, EventArgs e)
+        {
+            SqlConnection con =
+DBConnection.GetConnection();
+
+            try
+            {
+                con.Open();
+
+                string gender = "";
+
+                if (rbMale.Checked)
+                {
+                    gender = "Male";
+                }
+                else if (rbFemale.Checked)
+                {
+                    gender = "Female";
+                }
+
+                bool active =
+                chkActive.Checked;
+
+                string query =
+                @"INSERT INTO Customer
+    (
+    CustomerName,
+    Phone,
+    Gender,
+    Address,
+    IsActive
+    )
+
+    VALUES
+    (
+    @name,
+    @phone,
+    @gender,
+    @address,
+    @active
+    )";
+
+                SqlCommand cmd =
+                new SqlCommand(query, con);
+
+                cmd.Parameters.AddWithValue(
+                "@name",
+                txtName.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@phone",
+                txtPhone.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@gender",
+                gender);
+
+                cmd.Parameters.AddWithValue(
+                "@address",
+                txtAddress.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@active",
+                active);
+
+                cmd.ExecuteNonQuery();
+
+                MessageBox.Show("Customer Added");
+
+                con.Close();
+
+                LoadCustomers();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void dgvCustomers_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            selectedCustomerID =
+Convert.ToInt32(
+dgvCustomers.Rows[e.RowIndex]
+.Cells["CustomerID"].Value);
+
+            txtName.Text =
+            dgvCustomers.Rows[e.RowIndex]
+            .Cells["CustomerName"].Value.ToString();
+
+            txtPhone.Text =
+            dgvCustomers.Rows[e.RowIndex]
+            .Cells["Phone"].Value.ToString();
+
+            txtAddress.Text =
+            dgvCustomers.Rows[e.RowIndex]
+            .Cells["Address"].Value.ToString();
+
+            string gender =
+            dgvCustomers.Rows[e.RowIndex]
+            .Cells["Gender"].Value.ToString();
+
+            if (gender == "Male")
+            {
+                rbMale.Checked = true;
+            }
+            else
+            {
+                rbFemale.Checked = true;
+            }
+
+            chkActive.Checked =
+            Convert.ToBoolean(
+            dgvCustomers.Rows[e.RowIndex]
+            .Cells["IsActive"].Value);
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            SqlConnection con =
+DBConnection.GetConnection();
+
+            try
+            {
+                con.Open();
+
+                string gender = "";
+
+                if (rbMale.Checked)
+                {
+                    gender = "Male";
+                }
+                else
+                {
+                    gender = "Female";
+                }
+
+                bool active =
+                chkActive.Checked;
+
+                string query =
+                @"UPDATE Customer
+    SET
+    CustomerName=@name,
+    Phone=@phone,
+    Gender=@gender,
+    Address=@address,
+    IsActive=@active
+
+    WHERE CustomerID=@id";
+
+                SqlCommand cmd =
+                new SqlCommand(query, con);
+
+                cmd.Parameters.AddWithValue(
+                "@name",
+                txtName.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@phone",
+                txtPhone.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@gender",
+                gender);
+
+                cmd.Parameters.AddWithValue(
+                "@address",
+                txtAddress.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@active",
+                active);
+
+                cmd.Parameters.AddWithValue(
+                "@id",
+                selectedCustomerID);
+
+                cmd.ExecuteNonQuery();
+
+                MessageBox.Show("Customer Updated");
+
+                con.Close();
+
+                LoadCustomers();
+
+                btnClear.PerformClick();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            SqlConnection con =
+DBConnection.GetConnection();
+
+            try
+            {
+                con.Open();
+
+                string query =
+                "DELETE FROM Customer WHERE CustomerID=@id";
+
+                SqlCommand cmd =
+                new SqlCommand(query, con);
+
+                cmd.Parameters.AddWithValue(
+                "@id",
+                selectedCustomerID);
+
+                cmd.ExecuteNonQuery();
+
+                MessageBox.Show("Customer Deleted");
+
+                con.Close();
+
+                LoadCustomers();
+
+                btnClear.PerformClick();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            SqlConnection con =
+DBConnection.GetConnection();
+
+            try
+            {
+                con.Open();
+
+                string query =
+                @"SELECT
+    CustomerID,
+    CustomerName,
+    Phone,
+    Gender,
+    Address,
+    IsActive
+
+    FROM Customer
+
+    WHERE CustomerName LIKE '%' + @search + '%'";
+
+                SqlDataAdapter da =
+                new SqlDataAdapter(query, con);
+
+                da.SelectCommand.Parameters.AddWithValue(
+                "@search",
+                txtSearch.Text);
+
+                DataTable dt =
+                new DataTable();
+
+                da.Fill(dt);
+
+                dgvCustomers.DataSource = dt;
+
+                con.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+    
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            txtName.Clear();
+
+            txtPhone.Clear();
+
+            txtAddress.Clear();
+
+            txtSearch.Clear();
+
+            rbMale.Checked = false;
+
+            rbFemale.Checked = false;
+
+            chkActive.Checked = false;
+
+            selectedCustomerID = 0;
+        }
+    }
+}
