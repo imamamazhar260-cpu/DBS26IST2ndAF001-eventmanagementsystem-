@@ -1,0 +1,271 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+using eventmanagementsystem.Services;
+
+namespace eventmanagementsystem.Forms
+{
+    public partial class VendorForm : Form
+    {
+        int selectedVendorID = 0;
+        public VendorForm()
+        {
+            InitializeComponent();
+        }
+        void LoadVendors()
+        {
+            SqlConnection con =
+            DBConnection.GetConnection();
+
+            con.Open();
+
+            string query =
+            @"SELECT
+    VendorID,
+    VendorName,
+    ContactNumber,
+    ServiceType
+
+    FROM Vendor";
+
+            SqlDataAdapter da =
+            new SqlDataAdapter(query, con);
+
+            DataTable dt =
+            new DataTable();
+
+            da.Fill(dt);
+
+            dgvVendors.DataSource = dt;
+
+            con.Close();
+        }
+        private void VendorForm_Load(object sender, EventArgs e)
+        {
+            LoadVendors();
+        }
+
+        private void btnAdd_Click(object sender, EventArgs e)
+        {
+            SqlConnection con =
+DBConnection.GetConnection();
+
+            try
+            {
+                con.Open();
+
+                string query =
+                @"INSERT INTO Vendor
+    (
+    VendorName,
+    ContactNumber,
+    ServiceType
+    )
+
+    VALUES
+    (
+    @name,
+    @phone,
+    @service
+    )";
+
+                SqlCommand cmd =
+                new SqlCommand(query, con);
+
+                cmd.Parameters.AddWithValue(
+                "@name",
+                txtVendorName.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@phone",
+                txtPhone.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@service",
+                cmbService.Text);
+
+                cmd.ExecuteNonQuery();
+
+                MessageBox.Show("Vendor Added");
+
+                con.Close();
+
+                LoadVendors();
+
+                btnClear.PerformClick();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void dgvVendors_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void dgvVendors_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            selectedVendorID =
+Convert.ToInt32(
+dgvVendors.Rows[e.RowIndex]
+.Cells["VendorID"].Value);
+
+            txtVendorName.Text =
+            dgvVendors.Rows[e.RowIndex]
+            .Cells["VendorName"].Value.ToString();
+
+            txtPhone.Text =
+            dgvVendors.Rows[e.RowIndex]
+            .Cells["ContactNumber"].Value.ToString();
+
+            cmbService.Text =
+            dgvVendors.Rows[e.RowIndex]
+            .Cells["ServiceType"].Value.ToString();
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            SqlConnection con =
+DBConnection.GetConnection();
+
+            try
+            {
+                con.Open();
+
+                string query =
+                @"UPDATE Vendor
+    SET
+    VendorName=@name,
+    ContactNumber=@phone,
+    ServiceType=@service
+
+    WHERE VendorID=@id";
+
+                SqlCommand cmd =
+                new SqlCommand(query, con);
+
+                cmd.Parameters.AddWithValue(
+                "@name",
+                txtVendorName.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@phone",
+                txtPhone.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@service",
+                cmbService.Text);
+
+                cmd.Parameters.AddWithValue(
+                "@id",
+                selectedVendorID);
+
+                cmd.ExecuteNonQuery();
+
+                MessageBox.Show("Vendor Updated");
+
+                con.Close();
+
+                LoadVendors();
+
+                btnClear.PerformClick();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            SqlConnection con =
+DBConnection.GetConnection();
+
+            try
+            {
+                con.Open();
+
+                string query =
+                "DELETE FROM Vendor WHERE VendorID=@id";
+
+                SqlCommand cmd =
+                new SqlCommand(query, con);
+
+                cmd.Parameters.AddWithValue(
+                "@id",
+                selectedVendorID);
+
+                cmd.ExecuteNonQuery();
+
+                MessageBox.Show("Vendor Deleted");
+
+                con.Close();
+
+                LoadVendors();
+
+                btnClear.PerformClick();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            txtVendorName.Clear();
+
+            txtPhone.Clear();
+
+            txtSearch.Clear();
+
+            cmbService.SelectedIndex = -1;
+
+            selectedVendorID = 0;
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            SqlConnection con =
+DBConnection.GetConnection();
+
+            con.Open();
+
+            string query =
+            @"SELECT
+VendorID,
+VendorName,
+ContactNumber,
+ServiceType
+
+FROM Vendor
+
+WHERE VendorName LIKE '%' + @search + '%'";
+
+            SqlDataAdapter da =
+            new SqlDataAdapter(query, con);
+
+            da.SelectCommand.Parameters.AddWithValue(
+            "@search",
+            txtSearch.Text);
+
+            DataTable dt =
+            new DataTable();
+
+            da.Fill(dt);
+
+            dgvVendors.DataSource = dt;
+
+            con.Close();
+        }
+    }
+}

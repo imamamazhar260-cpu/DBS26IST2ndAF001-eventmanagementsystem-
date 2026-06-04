@@ -1,0 +1,224 @@
+﻿using eventmanagementsystem.Services;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.Common;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using System.IO;
+
+namespace eventmanagementsystem.Forms
+{
+    public partial class ReportForm : Form
+    {
+        public ReportForm()
+        {
+            InitializeComponent();
+        }
+        void LoadReports()
+        {
+            SqlConnection con =
+            DBConnection.GetConnection();
+
+            con.Open();
+
+            SqlCommand cmd1 =
+            new SqlCommand(
+            "SELECT COUNT(*) FROM Event", con);
+
+            lblEvents.Text =
+            "Total Events: " +
+            cmd1.ExecuteScalar().ToString();
+
+            SqlCommand cmd2 =
+            new SqlCommand(
+            "SELECT COUNT(*) FROM Customer", con);
+
+            lblCustomers.Text =
+            "Total Customers: " +
+            cmd2.ExecuteScalar().ToString();
+
+            SqlCommand cmd3 =
+            new SqlCommand(
+            "SELECT COUNT(*) FROM Booking", con);
+
+            lblBookings.Text =
+            "Total Bookings: " +
+            cmd3.ExecuteScalar().ToString();
+
+            SqlCommand cmd4 =
+            new SqlCommand(
+            "SELECT COUNT(*) FROM Payment", con);
+
+            lblPayments.Text =
+            "Total Payments: " +
+            cmd4.ExecuteScalar().ToString();
+
+            SqlCommand cmd5 =
+            new SqlCommand(
+            "SELECT COUNT(*) FROM Vendor", con);
+
+            lblVendors.Text =
+            "Total Vendors: " +
+            cmd5.ExecuteScalar().ToString();
+
+
+            SqlCommand cmd6 =
+            new SqlCommand(
+            "SELECT COUNT(*) FROM Venue", con);
+
+            lblVenues.Text =
+            "Total Venues: " +
+            cmd6.ExecuteScalar().ToString();
+            con.Close();
+        }
+
+        private void ReportForm_Load(object sender, EventArgs e)
+        {
+            LoadReports();
+        }
+
+        private void btnGenerate_Click(object sender, EventArgs e)
+        {
+
+            {
+               SqlConnection con =
+    DBConnection.GetConnection();
+
+                string query = "";
+
+                if (cmbReportType.Text == "Customer Report")
+                {
+                    query = "SELECT * FROM Customer";
+                }
+                else if (cmbReportType.Text == "Active Customer Report")
+                {
+                    query = "SELECT * FROM Customer WHERE ISactive = 1";
+                }
+                else if (cmbReportType.Text == "Event Report")
+                {
+                    query = "SELECT * FROM Event";
+                }
+                else if (cmbReportType.Text == "Booking Report")
+                {
+                    query = "SELECT * FROM Booking";
+                }
+                else if (cmbReportType.Text == "Payment Report")
+                {
+                    query = "SELECT * FROM Payment";
+                }
+                else if (cmbReportType.Text == "Vendor Report")
+                {
+                    query = "SELECT * FROM Vendor";
+                }
+                else if (cmbReportType.Text == "Venue Report")
+                {
+                    query = "SELECT * FROM Venue";
+                }
+                else if (cmbReportType.Text == "Customer Booking Report")
+                {
+                    query =
+                    "SELECT * FROM Booking WHERE CustomerID = 1";
+                }
+                else if (cmbReportType.Text == "Event Booking Report")
+                {
+                    query =
+                    "SELECT * FROM Booking WHERE EventID = 1 ";
+                }
+                else if (cmbReportType.Text == "Venue Capacity Report")
+                {
+                    query =
+                    "SELECT * FROM Venue WHERE Capacity >= 100";
+                    
+                }
+
+                if (query == "")
+                {
+                    MessageBox.Show("Select Report Type");
+                    return;
+                }
+
+                DataTable dt = new DataTable();
+
+                SqlDataAdapter da =
+                new SqlDataAdapter(query, con);
+
+                da.Fill(dt);
+
+                dgvReport.DataSource = dt;
+            }
+
+        }
+
+        private void dgvReport_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void btnExportPDF_Click(object sender, EventArgs e)
+        
+        {
+            if (dgvReport.Rows.Count == 0)
+            {
+                MessageBox.Show("Generate a report first.");
+                return;
+            }
+
+            SaveFileDialog sfd = new SaveFileDialog();
+
+            sfd.Filter = "PDF Files|*.pdf";
+            sfd.FileName = cmbReportType.Text + ".pdf";
+
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                Document document = new Document(PageSize.A4);
+
+                PdfWriter.GetInstance(
+                    document,
+                    new FileStream(sfd.FileName, FileMode.Create));
+
+                document.Open();
+
+                PdfPTable table =
+                    new PdfPTable(dgvReport.Columns.Count);
+
+                // Headers
+                foreach (DataGridViewColumn column in dgvReport.Columns)
+                {
+                    table.AddCell(column.HeaderText);
+                }
+
+                // Data
+                foreach (DataGridViewRow row in dgvReport.Rows)
+                {
+                    if (!row.IsNewRow)
+                    {
+                        foreach (DataGridViewCell cell in row.Cells)
+                        {
+                            table.AddCell(
+                                cell.Value == null
+                                ? ""
+                                : cell.Value.ToString());
+                        }
+                    }
+                }
+
+                document.Add(table);
+
+                document.Close();
+
+                MessageBox.Show("PDF Exported Successfully");
+            }
+        }
+    }
+    }
+
+    
+
